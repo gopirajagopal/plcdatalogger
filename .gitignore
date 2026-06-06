@@ -1,5 +1,5 @@
 build/
-dist/
+dist/BoilerPLCMonitor/
 __pycache__/
 *.pyc
 *.spec
