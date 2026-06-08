@@ -139,13 +139,20 @@ class PLCClient:
 
     # ── Low-level Modbus reads ────────────────────────────────────────────────
 
+    @staticmethod
+    def _call(fn, address, count, slave):
+        """Call a pymodbus read fn trying dev_id=, slave=, unit= in order."""
+        for kw in [{'dev_id': slave}, {'slave': slave}, {'unit': slave}, {}]:
+            try:
+                return fn(address, count=count, **kw)
+            except TypeError:
+                continue
+        return fn(address, count)
+
     def _read_holding(self, address: int, count: int, slave: int) -> Optional[List[int]]:
         """FC3 – read holding registers (%MW). Returns list of uint16."""
         try:
-            try:
-                rr = self._client.read_holding_registers(address, count=count, unit=slave)
-            except TypeError:
-                rr = self._client.read_holding_registers(address, count=count, slave=slave)
+            rr = self._call(self._client.read_holding_registers, address, count, slave)
             if rr.isError():
                 return None
             return list(rr.registers)
@@ -156,10 +163,7 @@ class PLCClient:
     def _read_input(self, address: int, count: int, slave: int) -> Optional[List[int]]:
         """FC4 – read input registers (%IW). Returns list of uint16."""
         try:
-            try:
-                rr = self._client.read_input_registers(address, count=count, unit=slave)
-            except TypeError:
-                rr = self._client.read_input_registers(address, count=count, slave=slave)
+            rr = self._call(self._client.read_input_registers, address, count, slave)
             if rr.isError():
                 return None
             return list(rr.registers)
@@ -170,10 +174,7 @@ class PLCClient:
     def _read_coils(self, address: int, count: int, slave: int) -> Optional[List[bool]]:
         """FC1 – read coils (%MX). Returns list of bool."""
         try:
-            try:
-                rr = self._client.read_coils(address, count=count, unit=slave)
-            except TypeError:
-                rr = self._client.read_coils(address, count=count, slave=slave)
+            rr = self._call(self._client.read_coils, address, count, slave)
             if rr.isError():
                 return None
             return list(rr.bits[:count])
