@@ -14,17 +14,24 @@ try:
 except ImportError:
     from pymodbus.client.sync import ModbusTcpClient  # pymodbus 2.x
 
-def _read(client, addr, count, slave):
-    """Try every known pymodbus API variant for unit/slave ID."""
-    for kw in [{'unit': slave}, {'slave': slave}, {}]:
+def _call(fn, addr, count, slave):
+    """Try every known pymodbus kwarg for unit/slave ID."""
+    for kw in [{'dev_id': slave}, {'slave': slave}, {'unit': slave}, {}]:
         try:
-            r = client.read_holding_registers(addr, count=count, **kw)
-            return r
+            return fn(addr, count=count, **kw)
         except TypeError:
             continue
-    return client.read_holding_registers(addr, count)  # positional fallback
+    return fn(addr, count)
 
-import pymodbus as _pm; print(f"pymodbus version: {_pm.__version__}")
+def _read(client, addr, count, slave):
+    """Try FC3 holding registers first, then FC4 input registers."""
+    r = _call(client.read_holding_registers, addr, count, slave)
+    if r is None or r.isError():
+        r = _call(client.read_input_registers, addr, count, slave)
+    return r
+
+import pymodbus as _pm
+print(f"pymodbus version: {_pm.__version__}")
 
 def scan(ip, port, slave, start, end):
     c = ModbusTcpClient(ip, port=port, timeout=3)
@@ -42,7 +49,7 @@ def scan(ip, port, slave, start, end):
     for batch_start in range(start, end + 1, 50):
         count = min(50, end - batch_start + 1)
         r = _read(c, batch_start, count, slave)
-        if r.isError():
+        if r is None or r.isError():
             continue
         regs = r.registers
         for i, v in enumerate(regs):
