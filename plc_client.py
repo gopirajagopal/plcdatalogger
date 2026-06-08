@@ -216,7 +216,7 @@ class PLCClient:
                 if val is None:
                     tv.error = True
                     tv.quality = 'bad'
-                    self._connected = False
+                    # individual register read failed — keep connection alive
                 else:
                     tv.value = round(val, 4)
                     tv.quality = 'good'
@@ -224,11 +224,16 @@ class PLCClient:
                         (tag.hi_alarm is not None and val > tag.hi_alarm) or
                         (tag.lo_alarm is not None and val < tag.lo_alarm)
                     )
+            except OSError:
+                # TCP-level socket error — mark disconnected so reconnect kicks in
+                tv.error = True
+                tv.quality = 'bad'
+                self._connected = False
+                log.warning('TCP error during poll [%s] — will reconnect', tag.name)
             except Exception as exc:
                 tv.error = True
                 tv.quality = 'bad'
                 log.debug('poll [%s]: %s', tag.name, exc)
-                self._connected = False
             updated[tag.name] = tv
         return updated
 
@@ -237,14 +242,16 @@ class PLCClient:
             if not self._connected:
                 log.info('Reconnecting to %s…', self.ip)
                 self.connect()
-            if self._connected:
-                updated = self._poll_once()
-                self._values.update(updated)
-                for cb in list(self._callbacks):
-                    try:
-                        cb(updated)
-                    except Exception:
-                        pass
+                if not self._connected:
+                    time.sleep(self.poll_interval)
+                    continue
+            updated = self._poll_once()
+            self._values.update(updated)
+            for cb in list(self._callbacks):
+                try:
+                    cb(updated)
+                except Exception:
+                    pass
             time.sleep(self.poll_interval)
 
     def start_polling(self):
