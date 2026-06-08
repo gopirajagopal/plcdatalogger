@@ -15,10 +15,16 @@ except ImportError:
     from pymodbus.client.sync import ModbusTcpClient  # pymodbus 2.x
 
 def _read(client, addr, count, slave):
-    try:
-        return client.read_holding_registers(addr, count=count, unit=slave)
-    except TypeError:
-        return client.read_holding_registers(addr, count=count, slave=slave)
+    """Try every known pymodbus API variant for unit/slave ID."""
+    for kw in [{'unit': slave}, {'slave': slave}, {}]:
+        try:
+            r = client.read_holding_registers(addr, count=count, **kw)
+            return r
+        except TypeError:
+            continue
+    return client.read_holding_registers(addr, count)  # positional fallback
+
+import pymodbus as _pm; print(f"pymodbus version: {_pm.__version__}")
 
 def scan(ip, port, slave, start, end):
     c = ModbusTcpClient(ip, port=port, timeout=3)
