@@ -14,12 +14,11 @@ try:
 except ImportError:
     from pymodbus.client.sync import ModbusTcpClient  # pymodbus 2.x
 
-import pymodbus
-_PM3 = int(pymodbus.__version__.split('.')[0]) >= 3
-
 def _read(client, addr, count, slave):
-    kwargs = {'slave': slave} if _PM3 else {'unit': slave}
-    return client.read_holding_registers(addr, count=count, **kwargs)
+    try:
+        return client.read_holding_registers(addr, count=count, unit=slave)
+    except TypeError:
+        return client.read_holding_registers(addr, count=count, slave=slave)
 
 def scan(ip, port, slave, start, end):
     c = ModbusTcpClient(ip, port=port, timeout=3)
