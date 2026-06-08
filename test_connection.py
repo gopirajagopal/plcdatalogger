@@ -93,6 +93,32 @@ def test_raw_hello(ip, port):
         raw_send(ip, port, probe, probe.hex()[:16])
 
 
+def test_listen(ip, port, seconds=5):
+    """Just connect and listen — PLC may push data without needing a request."""
+    print(f"\n=== Listen-only on {ip}:{port} (waiting {seconds}s) ===")
+    try:
+        s = socket.socket()
+        s.settimeout(seconds)
+        s.connect((ip, port))
+        print(f"  Connected. Waiting for PLC to push data...")
+        try:
+            data = s.recv(512)
+            print(f"  PLC pushed {len(data)} bytes: {data.hex()}")
+            print(f"  ASCII: {data[:80]}")
+        except socket.timeout:
+            print(f"  Nothing received in {seconds}s — not a push port")
+        s.close()
+    except Exception as e:
+        print(f"  ERROR: {e}")
+
+
+def test_modbus_tcp_port(ip, port):
+    print(f"\n=== Modbus TCP on {ip}:{port} ===")
+    for slave in [1, 0, 255]:
+        pkt = struct.pack('>HHHBB HH', 1, 0, 6, slave, 3, 0, 1)
+        raw_send(ip, port, pkt, f"FC3 slave={slave}")
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--ip',   default=IP)
@@ -105,6 +131,12 @@ if __name__ == '__main__':
     test_modbus_tcp(args.ip, args.port)
     test_modbus_rtu_over_tcp(args.ip, args.port)
     test_read_coils(args.ip, args.port)
-    test_raw_hello(args.ip, args.port)
+
+    # Test: PLC might push data without needing a request
+    test_listen(args.ip, 50000, seconds=5)
+    test_listen(args.ip, 50002, seconds=5)
+
+    # Test Modbus on port 50002
+    test_modbus_tcp_port(args.ip, 50002)
 
     print("\n=== Done. Share the output above. ===")
