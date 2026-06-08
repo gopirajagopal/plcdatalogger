@@ -2,12 +2,22 @@
 # SETEX 797TCE Monitor — Modbus TCP via pymodbus (CoDeSys V2)
 from PyInstaller.utils.hooks import collect_all
 
+import os, glob
+
 datas = [
     ('plc_client.py', '.'),
     ('ui_main.py',    '.'),
     ('config.json',   '.'),   # machine config deployed beside exe
 ]
-binaries = []
+
+# Bundle VC++ runtime so the exe runs without installing Redistributable
+_vcrt_dlls = [
+    r'C:\Windows\System32\VCRUNTIME140.dll',
+    r'C:\Windows\System32\VCRUNTIME140_1.dll',
+    r'C:\Windows\System32\MSVCP140.dll',
+    r'C:\Windows\System32\MSVCP140_1.dll',
+]
+binaries = [(dll, '.') for dll in _vcrt_dlls if os.path.exists(dll)]
 hiddenimports = [
     'pymodbus',
     'pymodbus.client',
