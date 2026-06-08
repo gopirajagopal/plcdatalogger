@@ -18,9 +18,13 @@ def try_read(c, fn, addr, count, label):
             r = fn(addr, count=count, **kw)
             if not r.isError():
                 return r.registers if hasattr(r, 'registers') else list(r.bits[:count])
+            print(f"  [{label}] Modbus error response: {r}")
             return None
         except TypeError:
             continue
+        except Exception as e:
+            print(f"  [{label}] Exception: {e}")
+            return None
     return None
 
 c = ModbusTcpClient(IP, port=PORT, timeout=3)
