@@ -1,5 +1,5 @@
-python-snap7==1.4.1
-PyQt5==5.15.11
-pyqtgraph==0.13.7
-pyinstaller==6.11.1
+pymodbus>=3.5.0
+PyQt5>=5.15.0
+pyqtgraph>=0.13.0
 numpy>=1.24.0
+pyinstaller>=6.0.0

@@ -1,0 +1,169 @@
+{
+  "_comment": [
+    "SETEX 797TCE — CoDeSys V2 Modbus TCP configuration",
+    "CoDeSys maps %MW0,%MW1... → holding registers 0,1... (FC3)",
+    "Use the Scanner tab to discover actual register addresses.",
+    "Compare scanner raw values with what the SETEX display shows,",
+    "then update 'address' fields below to match."
+  ],
+
+  "connection": {
+    "ip":            "192.168.1.220",
+    "port":          502,
+    "slave_id":      1,
+    "timeout":       3.0,
+    "poll_interval": 1.0,
+    "auto_connect":  false
+  },
+
+  "tags": [
+    {
+      "_comment":    "Machine status word — bit 0=running, bit 1=fault, bit 2=stopped",
+      "name":        "machine_status",
+      "description": "Machine Status",
+      "address":     0,
+      "dtype":       "uint16",
+      "unit":        "",
+      "trend":       false
+    },
+    {
+      "_comment":    "Bit 0 of %MW0 — machine running flag",
+      "name":        "running",
+      "description": "Running",
+      "address":     0,
+      "dtype":       "bool",
+      "bit":         0,
+      "unit":        "",
+      "trend":       false
+    },
+    {
+      "_comment":    "Bit 1 of %MW0 — fault/alarm active",
+      "name":        "fault",
+      "description": "Fault",
+      "address":     0,
+      "dtype":       "bool",
+      "bit":         1,
+      "unit":        "",
+      "trend":       false
+    },
+    {
+      "_comment":    "Machine speed in RPM — %MW1. Scale=1 if raw=RPM directly.",
+      "name":        "speed_rpm",
+      "description": "Machine Speed",
+      "address":     1,
+      "dtype":       "uint16",
+      "scale":       1.0,
+      "unit":        "RPM",
+      "hi_alarm":    1500,
+      "lo_alarm":    null,
+      "trend":       true
+    },
+    {
+      "_comment":    "Production length counter (metres) — low word at %MW2",
+      "name":        "prod_length_lw",
+      "description": "Production (m) LW",
+      "address":     2,
+      "dtype":       "uint16",
+      "scale":       1.0,
+      "unit":        "m",
+      "trend":       false
+    },
+    {
+      "_comment":    "Production length counter — high word at %MW3. Combined: HW*65536 + LW",
+      "name":        "prod_length_hw",
+      "description": "Production (m) HW",
+      "address":     3,
+      "dtype":       "uint16",
+      "scale":       65536.0,
+      "unit":        "m",
+      "trend":       false
+    },
+    {
+      "_comment":    "Current batch production count — pieces or metres",
+      "name":        "batch_count",
+      "description": "Batch Count",
+      "address":     4,
+      "dtype":       "uint16",
+      "unit":        "pcs",
+      "trend":       true
+    },
+    {
+      "_comment":    "Active fault/alarm code — 0 = no fault",
+      "name":        "fault_code",
+      "description": "Fault Code",
+      "address":     5,
+      "dtype":       "uint16",
+      "unit":        "",
+      "hi_alarm":    1,
+      "lo_alarm":    null,
+      "trend":       false
+    },
+    {
+      "_comment":    "Set speed / target RPM — %MW6",
+      "name":        "set_speed",
+      "description": "Set Speed",
+      "address":     6,
+      "dtype":       "uint16",
+      "unit":        "RPM",
+      "trend":       true
+    },
+    {
+      "_comment":    "Cylinder temperature (if sensor fitted) — %MW7, scale 0.1 → °C",
+      "name":        "cylinder_temp",
+      "description": "Cylinder Temp",
+      "address":     7,
+      "dtype":       "int16",
+      "scale":       0.1,
+      "unit":        "°C",
+      "hi_alarm":    60.0,
+      "lo_alarm":    null,
+      "trend":       true
+    },
+    {
+      "_comment":    "Total revolutions counter (low word) — %MW8",
+      "name":        "revs_lw",
+      "description": "Total Revs (LW)",
+      "address":     8,
+      "dtype":       "uint16",
+      "unit":        "rev",
+      "trend":       false
+    },
+    {
+      "_comment":    "Total revolutions counter (high word) — %MW9",
+      "name":        "revs_hw",
+      "description": "Total Revs (HW)",
+      "address":     9,
+      "dtype":       "uint16",
+      "unit":        "rev",
+      "trend":       false
+    },
+    {
+      "_comment":    "Yarn feeder 1 tension — %MW10",
+      "name":        "yarn_tension_1",
+      "description": "Yarn Tension 1",
+      "address":     10,
+      "dtype":       "uint16",
+      "unit":        "cN",
+      "hi_alarm":    200,
+      "lo_alarm":    null,
+      "trend":       true
+    },
+    {
+      "_comment":    "Yarn feeder 2 tension — %MW11",
+      "name":        "yarn_tension_2",
+      "description": "Yarn Tension 2",
+      "address":     11,
+      "dtype":       "uint16",
+      "unit":        "cN",
+      "hi_alarm":    200,
+      "lo_alarm":    null,
+      "trend":       true
+    }
+  ],
+
+  "display": {
+    "window_title":  "SETEX 797TCE Monitor",
+    "machine_label": "SECOM-AK04",
+    "trend_history": 300
+  }
+}
