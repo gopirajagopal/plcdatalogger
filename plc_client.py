@@ -16,12 +16,15 @@ import logging
 from dataclasses import dataclass, field
 from typing import Optional, Dict, List, Callable
 
+import pymodbus as _pymodbus_pkg
 try:
     from pymodbus.client import ModbusTcpClient          # pymodbus >= 3.0
-    _PYMODBUS3 = True
 except ImportError:
     from pymodbus.client.sync import ModbusTcpClient    # pymodbus 2.x fallback
-    _PYMODBUS3 = False
+_PYMODBUS3 = int(_pymodbus_pkg.__version__.split('.')[0]) >= 3
+
+def _slave_kwarg(slave_id: int) -> dict:
+    return {'slave': slave_id} if _PYMODBUS3 else {'unit': slave_id}
 
 log = logging.getLogger(__name__)
 
@@ -137,7 +140,7 @@ class PLCClient:
     def _read_holding(self, address: int, count: int, slave: int) -> Optional[List[int]]:
         """FC3 – read holding registers (%MW). Returns list of uint16."""
         try:
-            rr = self._client.read_holding_registers(address, count=count, slave=slave)
+            rr = self._client.read_holding_registers(address, count=count, **_slave_kwarg(slave))
             if rr.isError():
                 return None
             return list(rr.registers)
@@ -148,7 +151,7 @@ class PLCClient:
     def _read_input(self, address: int, count: int, slave: int) -> Optional[List[int]]:
         """FC4 – read input registers (%IW). Returns list of uint16."""
         try:
-            rr = self._client.read_input_registers(address, count=count, slave=slave)
+            rr = self._client.read_input_registers(address, count=count, **_slave_kwarg(slave))
             if rr.isError():
                 return None
             return list(rr.registers)
@@ -159,7 +162,7 @@ class PLCClient:
     def _read_coils(self, address: int, count: int, slave: int) -> Optional[List[bool]]:
         """FC1 – read coils (%MX). Returns list of bool."""
         try:
-            rr = self._client.read_coils(address, count=count, slave=slave)
+            rr = self._client.read_coils(address, count=count, **_slave_kwarg(slave))
             if rr.isError():
                 return None
             return list(rr.bits[:count])

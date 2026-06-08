@@ -9,7 +9,17 @@ Usage:
 """
 
 import argparse
-from pymodbus.client import ModbusTcpClient
+try:
+    from pymodbus.client import ModbusTcpClient        # pymodbus 3.x
+except ImportError:
+    from pymodbus.client.sync import ModbusTcpClient  # pymodbus 2.x
+
+import pymodbus
+_PM3 = int(pymodbus.__version__.split('.')[0]) >= 3
+
+def _read(client, addr, count, slave):
+    kwargs = {'slave': slave} if _PM3 else {'unit': slave}
+    return client.read_holding_registers(addr, count=count, **kwargs)
 
 def scan(ip, port, slave, start, end):
     c = ModbusTcpClient(ip, port=port, timeout=3)
@@ -26,7 +36,7 @@ def scan(ip, port, slave, start, end):
     found = 0
     for batch_start in range(start, end + 1, 50):
         count = min(50, end - batch_start + 1)
-        r = c.read_holding_registers(batch_start, count=count, slave=slave)
+        r = _read(c, batch_start, count, slave)
         if r.isError():
             continue
         regs = r.registers
